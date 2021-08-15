@@ -8,8 +8,6 @@ export PATH
 PKGNAME=geneveutils
 VERSION=1.0.0
 
-required_commands="getent ip wc grep ifup ifdown"
-
 STATE_PATH=/tmp/.geneveutils.
 
 console_log () {
@@ -22,6 +20,16 @@ console_error () {
 
 print_first_arg () {
     echo "$1"
+}
+
+check_for_required_commands () {
+    for name in "$@" ; do
+        which "$name" >/dev/null 2>&1 || {
+            console_error "Required '$name' command not found"
+            exit 1
+        }
+        console_log "Dependency found: `which $name`"
+    done
 }
 
 check_for_root () {
@@ -174,6 +182,9 @@ get_version_address () {
 }
 
 pre_up () {
+    required_commands="getent ip wc grep"
+    check_for_required_commands $required_commands
+
     . "$1" || {
         console_error "Failed to load the configuration file."
         return 1
@@ -253,6 +264,9 @@ pre_up () {
 }
 
 post_down () {
+    required_commands="getent ip wc grep"
+    check_for_required_commands $required_commands
+
     . "$1" || {
         console_error "Failed to load the configuration file."
         return 1
@@ -276,6 +290,9 @@ post_down () {
 }
 
 restart () {
+    required_commands="getent ip wc grep ifup ifdown"
+    check_for_required_commands $required_commands
+
     . "$1" || {
         console_error "Failed to load the configuration file."
         return 1
@@ -334,14 +351,6 @@ usage () {
 }
 
 console_log "$PKGNAME version $VERSION"
-
-for name in $required_commands ; do
-    which $name >/dev/null 2>&1 || {
-        console_error "Required '$name' command not found"
-        exit 1
-    }
-    console_log "Dependency found: `which $name`"
-done
 
 subcommand=$1
 [ -z "$1" ] || shift
